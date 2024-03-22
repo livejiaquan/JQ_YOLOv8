@@ -173,7 +173,7 @@ class BasePredictor:
             cus_txt = f"{cus_frame}"
         self.txt_path = str(self.save_dir / "labels" / cus_txt)
         # self.txt_path = str(self.save_dir / "labels" / p.stem) + ("" if self.dataset.mode == "image" else f"_{frame}")
-
+        #JQ------------------------------------
         log_string += "%gx%g " % im.shape[2:]  # print string
         result = results[idx]
         log_string += result.verbose()
