@@ -170,7 +170,12 @@ class BasePredictor:
         if self.dataset.mode == "image":
             cus_txt = p.stem + ""
         else:
-            cus_txt = f"{cus_frame}"
+            # save_frames = True ,mean create datasets, save img
+            if self.args.save_frames:
+                cus_txt = f"{self.vid_frame[idx]}"
+            else:
+                # just label
+                cus_txt = f"{cus_frame}"
         self.txt_path = str(self.save_dir / "labels" / cus_txt)
         # self.txt_path = str(self.save_dir / "labels" / p.stem) + ("" if self.dataset.mode == "image" else f"_{frame}")
         #JQ------------------------------------
@@ -309,7 +314,7 @@ class BasePredictor:
                     }
                     p, im0 = path[i], None if self.source_type.tensor else im0s[i].copy()
                     p = Path(p)
-
+                     
                     if self.args.verbose or self.args.save or self.args.save_txt or self.args.show:
                         s += self.write_results(i, self.results, (p, im, im0))
                     if self.args.save or self.args.save_txt:
@@ -317,7 +322,8 @@ class BasePredictor:
                     if self.args.show and self.plotted_img is not None:
                         self.show(p)
                     if self.args.save and self.plotted_img is not None:
-                        self.save_preds(vid_cap, i, str(self.save_dir / p.name))
+                        org_img = im0s[i].copy()
+                        self.save_preds(vid_cap, i, str(self.save_dir / p.name), self.results, org_img)
 
                 self.run_callbacks("on_predict_batch_end")
                 yield from self.results
@@ -370,7 +376,7 @@ class BasePredictor:
         cv2.imshow(str(p), im0)
         cv2.waitKey(500 if self.batch[3].startswith("image") else 1)  # 1 millisecond
 
-    def save_preds(self, vid_cap, idx, save_path):
+    def save_preds(self, vid_cap, idx, save_path, results, org_img):
         """Save video predictions as mp4 at specified path."""
         im0 = self.plotted_img
         # Save imgs
@@ -399,9 +405,15 @@ class BasePredictor:
             self.vid_writer[idx].write(im0)
 
             # Write frame
-            if self.args.save_frames:
-                cv2.imwrite(f"{frames_path}{self.vid_frame[idx]}.jpg", im0)
+            if self.args.save_frames and len(results[0]) > 0:
+                cv2.imwrite(f"{frames_path}{self.vid_frame[idx]}.jpg", org_img)
                 self.vid_frame[idx] += 1
+
+            # # Write frame
+            # if self.args.save_frames:
+            #     cv2.imwrite(f"{frames_path}{self.vid_frame[idx]}.jpg", im0)
+            #     self.vid_frame[idx] += 1
+            
 
     def run_callbacks(self, event: str):
         """Runs all registered callbacks for a specific event."""
